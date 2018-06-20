@@ -18,7 +18,7 @@ async def create_pool(loop,**kw):
 		port = kw.get('port',3306),
 		user = kw['user'],
 		password = kw['password'],
-		db = kw['db'],
+		db = kw['database'],
 		charset = kw.get('charset','utf8'),
 		autocommit = kw.get('autocommit',True),
 		maxsize = kw.get('maxsize',10),
@@ -91,7 +91,7 @@ class IntegerField(Field):
 
 class FloatField(Field):
 
-	def __init__(self,name=None,primary_key=false,default=0.0):
+	def __init__(self,name=None,primary_key=False,default=0.0):
 		super().__init__(name,'real',primary_key,default)
 
 class TextField(Field):
@@ -117,13 +117,13 @@ class ModelMetaclass(type):
 				mappings[k] = v
 				if v.primary_key:
 					if primaryKey:
-						raise StandardError('Duplicate primary key for field:%s' % k)
+						raise ValueError('Duplicate primary key for field:%s' % k)
 					primaryKey = k
 				else:
 					fields.append(k)
 
 			if not primaryKey:
-				raise StandardError('Primary key not found.')
+				raise ValueError('Primary key not found.')
 			for k in mappings.keys():
 				attrs.pop(k)
 
