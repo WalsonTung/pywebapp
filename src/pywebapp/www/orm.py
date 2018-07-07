@@ -18,7 +18,7 @@ async def create_pool(loop,**kw):
 		port = kw.get('port',3306),
 		user = kw['user'],
 		password = kw['password'],
-		db = kw['database'],
+		db = kw['db'],
 		charset = kw.get('charset','utf8'),
 		autocommit = kw.get('autocommit',True),
 		maxsize = kw.get('maxsize',10),
@@ -122,22 +122,22 @@ class ModelMetaclass(type):
 				else:
 					fields.append(k)
 
-			if not primaryKey:
-				raise ValueError('Primary key not found.')
-			for k in mappings.keys():
-				attrs.pop(k)
+		if not primaryKey:
+			raise ValueError('Primary key not found.')
+		for k in mappings.keys():
+			attrs.pop(k)
 
-			escaped_field = list(map(lambda f: '`%s`' % f,fields))
-			attrs['__mappings_'] = mappings
-			attrs['__table__'] = tableName
-			attrs['__primary_key__'] = primaryKey
-			attrs['__fields__'] = fields
-			attrs['__select__'] = 'select `%s`,%s from `%s`' %(primaryKey,','.join(escaped_field),tableName)
-			attrs['__insert__'] = 'insert into `%s` (%s,`%s`) values (%s)' % (tableName,','.join(escaped_field),primaryKey,create_args_string)
-			attrs['__update__'] = 'update `%s` set %s where `%s`=?' % (tableName,','.join(map(lambda f:'`%s`=?' % (mappings.get(f).name or f),fields)),primaryKey)
-			attrs['__delete__'] = 'delete from `%s` where `%s`=?' %(tableName,primaryKey)
+		escaped_fields = list(map(lambda f: '`%s`' % f,fields))
+		attrs['__mappings__'] = mappings
+		attrs['__table__'] = tableName
+		attrs['__primary_key__'] = primaryKey
+		attrs['__fields__'] = fields
+		attrs['__select__'] = 'select `%s`,%s from `%s`' %(primaryKey,','.join(escaped_fields),tableName)
+		attrs['__insert__'] = 'insert into `%s` (%s,`%s`) values (%s)' % (tableName,','.join(escaped_fields),primaryKey,create_args_string(len(escaped_fields)+1))
+		attrs['__update__'] = 'update `%s` set %s where `%s`=?' % (tableName,','.join(map(lambda f:'`%s`=?' % (mappings.get(f).name or f),fields)),primaryKey)
+		attrs['__delete__'] = 'delete from `%s` where `%s`=?' %(tableName,primaryKey)
 
-			return type.__new__(cls,name,bases,attrs)
+		return type.__new__(cls,name,bases,attrs)
 
 class Model(dict,metaclass=ModelMetaclass):
 
@@ -159,7 +159,7 @@ class Model(dict,metaclass=ModelMetaclass):
 	def getValueOrDefault(self,key):
 		value = getattr(self,key,None)
 		if value is None:
-			field = self.__mappings_[key]
+			field = self.__mappings__[key]
 			if field.default is not None:
 				value = field.default() if callable(field.default) else field.default
 				logging.debug('using default value for %s:%s' %(key,str(value)))

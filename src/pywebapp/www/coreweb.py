@@ -41,7 +41,7 @@ def post(path):
 def get_required_kw_args(fn):
 	args = []
 	params = inspect.signature(fn).parameters
-	for name,param in params.items:
+	for name,param in params.items():
 		if param.kind == inspect.Parameter.KEYWORD_ONLY and param.default == inspect.Parameter.empty:
 			args.append(name)
 	return tuple(args)
@@ -144,7 +144,7 @@ class RequestHandler(object):
 
 
 def add_static(app):
-	path = os.path.json(os.path.dirname(os.path.abspath(__file__)),'static')
+	path = os.path.join(os.path.dirname(os.path.abspath(__file__)),'static')
 	app.router.add_static('/static/',path)
 	logging.info('add static %s => %s' % ('/static/',path))
 
@@ -155,7 +155,7 @@ def add_route(app,fn):
 		raise ValueError('@get or @post not defined in %s.' % str(fn))
 	if not asyncio.iscoroutinefunction(fn) and not inspect.isgeneratorfunction(fn):
 		fn = asyncio.coroutine(fn)
-	logging.info('add route %s %s => %s(%s)' % (method,path,fn.__name__,','.json(inspect.signature(fn).parameters.keys())))
+	logging.info('add route %s %s => %s(%s)' % (method,path,fn.__name__,','.join(inspect.signature(fn).parameters.keys())))
 	app.router.add_route(method,path,RequestHandler(app,fn))
 
 
